@@ -231,9 +231,9 @@ if (!class_exists("MissionQuiz"))
                         `<label>
                             <input type="radio" name="question${questionNumber}" value="${letter}">
                             ${currentQuestion.answers[letter]}
+                            <div class="checkmark">&nbsp ✓</div>
+                            <div class="wrong">&nbsp X</div>
                             <div class="results-container">
-                                <div class="checkmark">&nbsp ✓</div>
-                                <div class="wrong">&nbsp X</div>
                                 <div class="percent"></div>
                             </div>
                         </label>`
@@ -260,8 +260,6 @@ if (!class_exists("MissionQuiz"))
 
     // show results function
     async function showResults() {
-        await sleep(2000);
-
         let percentageCorrect = numCorrect / Object.keys(myQuestions).length
 
         var allAnswerLinks = []
@@ -367,19 +365,20 @@ if (!class_exists("MissionQuiz"))
                 }
             }
 
-            var mark;
+            var mark = undefined;
             const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
+            const labelContainer = answerContainer.querySelectorAll('label')[i];
             const percent = resultsContainer.querySelector(`.percent`);
             if (inputs[i].value === myQuestions[questionNumberX].correctAnswer) {
                 inputs[i].parentElement.classList.add("correct");
 
-                mark = resultsContainer.querySelector(`.checkmark`);
+                mark = labelContainer.querySelector(`.checkmark`);
                 percent.style.backgroundColor = "LightGreen";
             }
             else {
                 if (inputs[i].value === userAnswer) {
                     inputs[i].parentElement.classList.add("incorrect");
-                    mark = resultsContainer.querySelector('.wrong');
+                    mark = labelContainer.querySelector('.wrong');
                 }
 
                 percent.style.backgroundColor = "LightCoral";
@@ -395,15 +394,13 @@ if (!class_exists("MissionQuiz"))
                 const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
                 if (inputs[i].value != myQuestions[questionNumberX].correctAnswer) {
                     inputs[i].parentElement.classList.add("incorrect")
-                    const wrong = resultsContainer.querySelector(`.wrong`);
+                    const wrong = labelContainer.querySelector(`.wrong`);
                     wrong.style.display = "inline-block";
                 }
             }
         }
 
         sendAnswers(post_id, questionNumberX, answer_no);
-
-        resultsContainer.style.display = "inherit";
 
         // count correct answers
         if (myQuestions[questionNumberX].correctAnswer === userAnswer) {
@@ -512,7 +509,8 @@ if (!class_exists("MissionQuiz"))
             submitButton.addEventListener('click', showResults);
             nextButton.addEventListener("click", showNextSlide);
             </script>
-            <!--  END quiz javascript -->*/
+            <!--  END quiz javascript -->
+*/
 
 }
 
