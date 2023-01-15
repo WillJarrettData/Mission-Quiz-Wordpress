@@ -1,5 +1,7 @@
 
+// Called to update the database and return current totals
 function sendAnswers(quiz_id, question_no, answer_no) {
+    // Pass the data to PHP code (ajax_update_answers())
     var data = {
         action: 'update_answers',
         quiz_id: quiz_id,
@@ -9,10 +11,13 @@ function sendAnswers(quiz_id, question_no, answer_no) {
     jQuery.post(MissionQuiz.ajaxurl, data, function (response) { handleUpdateAnswerCallback(response); });
 }
 
+// Results returned from PHP code ajax_update_answers() is in response
 function handleUpdateAnswerCallback(response) {
     var update_answer_response = jQuery.parseJSON(response);
     if (update_answer_response.status == 1) {
-        //Success, update vote count
+        // Success, save the per-answer vote totals
+        // In the form: [{0: total0}, {1: total1}, ... {n, totaln}]
+        // If a question has not been answered yet it won't be in the database yet
         if (update_answer_response.percent_answered) {
             PercentAnswered = [...update_answer_response.percent_answered];
         }
@@ -20,16 +25,21 @@ function handleUpdateAnswerCallback(response) {
         //Failure, notify user
         if (update_answer_response.message != null) {
             alert(update_answer_response.message);
+            return;
         }
     }
 
+    // Do some math, first determine how many total answers have been made
     let total_answers = 0.0;
+    // Create an object that maps answer_index to answer_total
     let answers = {};
     for (var i = 0; i < PercentAnswered.length; i++) {
-        total_answers += Number(PercentAnswered[i].answer_total);
-        answers[PercentAnswered[i].answer] = Number(PercentAnswered[i].answer_total);
+        num_answers = Number(PercentAnswered[i].answer_total);
+        total_answers += num_answers;
+        answers[PercentAnswered[i].answer] = num_answers;
     }
 
+    // Fill in the .percent elements. Set their width and the 'nn%' text
     const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
     const inputs = answerContainer.querySelectorAll('input')
     for (var i = 0; i < inputs.length; i++) {
@@ -84,7 +94,120 @@ function buildQuiz() {
     quizContainer.innerHTML = output.join('');
 }
 
-// show results function
+// show slide function, called from html script and showNextSlide()
+function showSlide(n) {
+    // move active-slide class from previous slide to slide n
+    slides[currentSlide].classList.remove('active-slide');
+    slides[n].classList.add('active-slide');
+
+    nextButton.style.display = 'none';
+    submitButton.style.display = 'none';
+    submitAnswerButton.style.display = 'inline-block';
+
+    // hide checkmarks, x'es, and percent answered, first time currentSlide=n=0
+    if (currentSlide != n) {
+        const answersContainer = quizContainer.querySelectorAll('.answers')[currentSlide];
+        const resultsContainer = answersContainer.querySelectorAll('.results-container');
+        resultsContainer.forEach(x => x.setAttribute("style", "display:none"));
+
+        currentSlide = n;
+    }
+}
+
+// move between slides using this, called from nextButton click
+async function showNextSlide() {
+    showSlide(currentSlide + 1);
+    questionNumberX++;
+}
+
+// Turn off the submit answer, turn on either next button, or end quiz,
+// called from submitAnswerButton click
+async function showAnswer() {
+    submitAnswerButton.style.display = 'none';
+    if (currentSlide === slides.length - 1) {
+        submitButton.style.display = 'inline-block';
+    }
+    else {
+        nextButton.style.display = 'inline-block';
+    }
+}
+
+// validate answers, called from submitAnswerButton click
+function validateAnswers() {
+
+    // grab questions and answers
+    const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
+    const selector = `input[name=question${questionNumberX}]:checked`;
+
+    // userAnswer is undefined if no input selected
+    const userAnswer = (answerContainer.querySelector(selector) || {}).value;
+    const inputs = answerContainer.querySelectorAll('input')
+
+    // iterate through answers to validate
+    var answer_no = -1;
+    for (var i = 0; i < inputs.length; i++) {
+        inputs[i].disabled = true;
+
+        if (userAnswer !== undefined) {
+            if (inputs[i].value === userAnswer) {
+                answer_no = i;
+            }
+        }
+
+        // set mark to element .checkmark, or element .wrong
+        const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
+        const labelContainer = answerContainer.querySelectorAll('label')[i];
+        const percent = resultsContainer.querySelector(`.percent`);
+        if (inputs[i].value === myQuestions[questionNumberX].correctAnswer) {
+            // Make the text Green
+            inputs[i].parentElement.classList.add("correct");
+
+            let checkmark = labelContainer.querySelector(`.checkmark`);
+            checkmark.style.display = "inline-block";
+
+            percent.style.backgroundColor = "LightGreen";
+        }
+        else {
+            if (inputs[i].value === userAnswer) {
+                // Make the text Red
+                inputs[i].parentElement.classList.add("incorrect");
+
+                let wrongmark = labelContainer.querySelector('.wrong');
+                wrongmark.style.display = "inline-block";
+            }
+
+            percent.style.backgroundColor = "LightCoral";
+        }
+    }
+
+    if (userAnswer === undefined) {
+        // No answer selected, set the X on all the wrong entries
+        for (var i = 0; i < inputs.length; i++) {
+            const labelContainer = answerContainer.querySelectorAll('label')[i];
+            if (inputs[i].value != myQuestions[questionNumberX].correctAnswer) {
+                // Make the text Red
+                inputs[i].parentElement.classList.add("incorrect")
+
+                const wrongmark = labelContainer.querySelector(`.wrong`);
+                wrongmark.style.display = "inline-block";
+            }
+        }
+    }
+
+    // Update the database with the latest answer
+    // In the callback handleUpdateAnswerCallback() set the percent width and text
+    sendAnswers(post_id, questionNumberX, answer_no);
+
+    // count correct answers
+    if (myQuestions[questionNumberX].correctAnswer === userAnswer) {
+        numCorrect++;
+    }
+    else {
+        incorrectAnswers.push(questionNumberX)
+    }
+}
+
+// After all questions, show results function
 async function showResults() {
     let percentageCorrect = numCorrect / Object.keys(myQuestions).length
 
@@ -135,106 +258,6 @@ async function showResults() {
     quiz.innerHTML = ``;
     document.getElementById('submit').style.display = "none";
     document.getElementById('next').style.display = "none";
-}
-
-// show slide function
-function showSlide(n) {
-    slides[currentSlide].classList.remove('active-slide');
-    slides[n].classList.add('active-slide');
-    nextButton.style.display = 'none';
-    submitButton.style.display = 'none';
-    submitAnswerButton.style.display = 'inline-block';
-
-    // hide checkmarks, x'es, and percent answered
-    if (currentSlide != n) {
-        const answersContainer = quizContainer.querySelectorAll('.answers')[currentSlide];
-        const resultsContainer = answersContainer.querySelectorAll('.results-container');
-        resultsContainer.forEach(x => x.setAttribute("style", "display:none"));
-
-        currentSlide = n;
-    }
-}
-
-async function showAnswer() {
-    submitAnswerButton.style.display = 'none';
-    if (currentSlide === slides.length - 1) {
-        submitButton.style.display = 'inline-block';
-    }
-    else {
-        nextButton.style.display = 'inline-block';
-    }
-}
-
-// move between slides using this
-async function showNextSlide() {
-    showSlide(currentSlide + 1);
-    questionNumberX++;
-}
-
-// validate answers
-function validateAnswers() {
-
-    // grab questions and answers
-    const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
-    const selector = `input[name=question${questionNumberX}]:checked`;
-    const userAnswer = (answerContainer.querySelector(selector) || {}).value;
-    const inputs = answerContainer.querySelectorAll('input')
-
-    // iterate through answers to validate
-    var answer_no = -1;
-    for (var i = 0; i < inputs.length; i++) {
-        inputs[i].disabled = true;
-
-        if (userAnswer !== undefined) {
-            if (inputs[i].value === userAnswer) {
-                answer_no = i;
-            }
-        }
-
-        var mark = undefined;
-        const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
-        const labelContainer = answerContainer.querySelectorAll('label')[i];
-        const percent = resultsContainer.querySelector(`.percent`);
-        if (inputs[i].value === myQuestions[questionNumberX].correctAnswer) {
-            inputs[i].parentElement.classList.add("correct");
-
-            mark = labelContainer.querySelector(`.checkmark`);
-            percent.style.backgroundColor = "LightGreen";
-        }
-        else {
-            if (inputs[i].value === userAnswer) {
-                inputs[i].parentElement.classList.add("incorrect");
-                mark = labelContainer.querySelector('.wrong');
-            }
-
-            percent.style.backgroundColor = "LightCoral";
-        }
-
-        if (mark !== undefined) {
-            mark.style.display = "inline-block";
-        }
-    }
-
-    if (userAnswer === undefined) {
-        for (var i = 0; i < inputs.length; i++) {
-            const labelContainer = answerContainer.querySelectorAll('label')[i];
-            if (inputs[i].value != myQuestions[questionNumberX].correctAnswer) {
-                inputs[i].parentElement.classList.add("incorrect")
-                const wrong = labelContainer.querySelector(`.wrong`);
-                wrong.style.display = "inline-block";
-            }
-        }
-    }
-
-    sendAnswers(post_id, questionNumberX, answer_no);
-
-    // count correct answers
-    if (myQuestions[questionNumberX].correctAnswer === userAnswer) {
-        numCorrect++;
-    }
-    else {
-        incorrectAnswers.push(questionNumberX)
-    }
 }
 
 var questionNumberX = 0;

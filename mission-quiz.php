@@ -43,11 +43,13 @@ if (!class_exists("MissionQuiz"))
             add_action( 'wp_head', array( &$this, 'add_ajax_url' ));
         }
 
+        // Called on activation or update
         public function setup_plugin() {
             global $wpdb;
             global $mission_quiz_db_version;
             require_once( ABSPATH . 'wp-admin/upgrade-functions.php' );
 
+            // if the option is already set then setup not required
             if (get_option("mission_quiz_db_version")) {
                 if (get_option("mission_quiz_db_version") != $mission_quiz_db_version) {
                     die ("downgrade not supported!!!"); // there is no prev version using this var
@@ -55,34 +57,32 @@ if (!class_exists("MissionQuiz"))
                 return;
             }
 
+            // create the database, will fail if it already exists
             if ( !empty($wpdb->charset) )
                 $charset_collate = "DEFAULT CHARACTER SET ".$wpdb->charset;
-
             $sql[] = "CREATE TABLE ".$wpdb->base_prefix."mission_quiz_answer_totals (
-                        id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-                         quiz_id varchar(32) NOT NULL,
-                        question_id bigint(20) NOT NULL,
-                        answer varchar(32) NOT NULL,
-                         answer_total bigint(20) NOT NULL DEFAULT 1,
-                        KEY answer_id (quiz_id, question_id, answer),
-                        CONSTRAINT UNIQUE (quiz_id, question_id, answer)
-                        ) ".$charset_collate.";";
+                    id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    quiz_id varchar(32) NOT NULL,
+                    question_id bigint(20) NOT NULL,
+                    answer varchar(32) NOT NULL,
+                    answer_total bigint(20) NOT NULL DEFAULT 1,
+                    KEY answer_id (quiz_id, question_id, answer),
+                    CONSTRAINT UNIQUE (quiz_id, question_id, answer)
+                ) ".$charset_collate.";";
 
             $result = dbDelta ($sql);
+
+            // set the option to skip setup next time
             update_option ("mission_quiz_db_version", $mission_quiz_db_version);
         }
 
         public function init_plugin() {
-            $this->load_quiz_client_resources();
-        }
-
-        public function load_quiz_client_resources()
-        {
-            if ( !is_admin() )
-            {
+            if ( !is_admin() ) {
+                // load the style sheet
                 wp_register_style( 'mission-quiz', plugins_url( '/style/mission-quiz.css', __FILE__));
                 wp_enqueue_style( 'mission-quiz' );
 
+                // load the javascript
                 wp_register_script( 'mission-quiz',
                         plugins_url( '/js/mission-quiz.js', __FILE__),
                         array( 'jquery' ),
@@ -98,11 +98,12 @@ if (!class_exists("MissionQuiz"))
         }
 
         //********************************************************************
-        //Ajax handlers
-
+        // Ajax handler, called when javascript calls jQuery.post(MissionQuiz.ajaxurl, data, ...)
+        // with data.action='update_answers'
         public function ajax_update_answers() {
-            global $wpdb;
+            global $wpdb;  // database handle
 
+            // return object. Will be passed to the jQuery callback as json
             $result = array( 'status' => '-1',
                              'message' => '',
                              'percent_answered' => [] );
@@ -125,8 +126,10 @@ if (!class_exists("MissionQuiz"))
             $question_no = $_POST['question_no'];
             $answer_no = $_POST['answer_no'];
 
-            //Update user vote, -1 means no answer selected
+            //Update user vote, $answer_no=-1 means no answer selected
             if ($answer_no >= 0) {
+                // Either create a new entry (answer_total defaults to 1) or increment the
+                // existing entry (UPDATE answer_total = (answer_total + 1);)
                 $wpdb->query($wpdb->prepare("
                     INSERT INTO ".$wpdb->base_prefix."mission_quiz_answer_totals
                         (quiz_id, question_id, answer)
@@ -135,6 +138,7 @@ if (!class_exists("MissionQuiz"))
                         $quiz_id, $question_no, $answer_no));
             }
 
+            // Retrieve all of the answer_totals for this quiz/question/answer combination
             $answer_totals = $wpdb->get_results($wpdb->prepare("
                 SELECT answer, answer_total FROM ".$wpdb->base_prefix."mission_quiz_answer_totals
                     WHERE quiz_id=%s AND question_id=%d
@@ -163,6 +167,7 @@ if (!class_exists("MissionQuiz"))
 
 /* Modify myQuestions[] below, then add the following to your Wordpress page using the HTML widget.
 <!--  BEGIN quiz HTML -->
+    <!-- template for quiz, answers, buttons -->
     <div class="outer">
         <div class="quiz-container">
             <div id="quiz"></div>
@@ -176,6 +181,7 @@ if (!class_exists("MissionQuiz"))
     </div>
     <!--  END quiz HTML -->
 
+    <!-- BEGIN javascript -->
     <script>
 
     // define quiz data
@@ -238,7 +244,7 @@ if (!class_exists("MissionQuiz"))
         },
     ];
 
-    // start everything
+    // this will run when page is loaded. const references to html above
     const quizContainer = document.getElementById('quiz');
     const resultsContainer = document.getElementById('results');
     const submitButton = document.getElementById('submit');
@@ -246,9 +252,12 @@ if (!class_exists("MissionQuiz"))
 
     buildQuiz();
 
+    // const references to elements added by buildQuiz()
     const nextButton = document.getElementById("next");
     const slides = document.querySelectorAll(".slide");
 
+    // Find the post id for use as quiz_id in database.
+    // Default to an unlikely post_id
     var post_id = 0;
     classes = document.body.classList;
     for (let i in classes) {
@@ -264,6 +273,7 @@ if (!class_exists("MissionQuiz"))
     // show first slide
     showSlide(currentSlide);
 
+    // Add the hooks for button clicks
     submitAnswerButton.addEventListener("click", validateAnswers);
     submitAnswerButton.addEventListener("click", showAnswer);
     submitButton.addEventListener('click', showResults);
