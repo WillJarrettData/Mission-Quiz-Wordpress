@@ -8,109 +8,109 @@
  * Author URI:
  * License: GPL2
  *
- *	Copyright 2023 Craig Mautner (mailto:craig.mautner@gmail.com)
+ * Copyright 2023 Craig Mautner (mailto:craig.mautner@gmail.com)
  *
- *		This program is free software; you can redistribute it and/or modify
- *		it under the terms of the GNU General Public License, version 2, as
- *		published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation.
  *
- *		This program is distributed in the hope that it will be useful,
- *		but WITHOUT ANY WARRANTY; without even the implied warranty of
- *		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
- *		GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
+ * GNU General Public License for more details.
  *
- *		You should have received a copy of the GNU General Public License
- *		along with this program; if not, write to the Free Software
- *		Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA	02110-1301	USA
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA    02110-1301    USA
  *
- *		This Wordpress plugin is released under a GNU General Public License, version 2.
- *		A complete version of this license can be found here:
- *		http://www.gnu.org/licenses/gpl-2.0.html
+ * This Wordpress plugin is released under a GNU General Public License, version 2.
+ * A complete version of this license can be found here:
+ * http://www.gnu.org/licenses/gpl-2.0.html
 */
 
 if (!class_exists("MissionQuiz"))
 {
-	global $mission_quiz_db_version;
-	$mission_quiz_db_version = "1.0";
+    global $mission_quiz_db_version;
+    $mission_quiz_db_version = "1.0";
 
-	class MissionQuiz
-	{
-		function __construct()
-		{
-			add_action( 'init', array( &$this, 'init_plugin' ));
-			add_action( 'wp_ajax_update_answers', array( &$this, 'ajax_update_answers' ));
-			add_action( 'wp_ajax_nopriv_update_answers', array( &$this, 'ajax_update_answers' ));
-			add_action( 'wp_head', array( &$this, 'add_ajax_url' ));
+    class MissionQuiz
+    {
+        function __construct()
+        {
+            add_action( 'init', array( &$this, 'init_plugin' ));
+            add_action( 'wp_ajax_update_answers', array( &$this, 'ajax_update_answers' ));
+            add_action( 'wp_ajax_nopriv_update_answers', array( &$this, 'ajax_update_answers' ));
+            add_action( 'wp_head', array( &$this, 'add_ajax_url' ));
         }
 
-		public function setup_plugin() {
-			global $wpdb;
-			global $mission_quiz_db_version;
-			require_once( ABSPATH . 'wp-admin/upgrade-functions.php' );
+        public function setup_plugin() {
+            global $wpdb;
+            global $mission_quiz_db_version;
+            require_once( ABSPATH . 'wp-admin/upgrade-functions.php' );
 
-			if (get_option("mission_quiz_db_version")) {
+            if (get_option("mission_quiz_db_version")) {
                 if (get_option("mission_quiz_db_version") != $mission_quiz_db_version) {
-					die ("downgrade not supported!!!"); // there is no prev version using this var
+                    die ("downgrade not supported!!!"); // there is no prev version using this var
                 }
                 return;
-			}
+            }
 
-			if ( !empty($wpdb->charset) )
-				$charset_collate = "DEFAULT CHARACTER SET ".$wpdb->charset;
+            if ( !empty($wpdb->charset) )
+                $charset_collate = "DEFAULT CHARACTER SET ".$wpdb->charset;
 
-			$sql[] = "CREATE TABLE ".$wpdb->base_prefix."mission_quiz_answer_totals (
-						id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-			 			quiz_id varchar(32) NOT NULL,
+            $sql[] = "CREATE TABLE ".$wpdb->base_prefix."mission_quiz_answer_totals (
+                        id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                         quiz_id varchar(32) NOT NULL,
                         question_id bigint(20) NOT NULL,
                         answer varchar(32) NOT NULL,
-			 			answer_total bigint(20) NOT NULL DEFAULT 1,
-			            KEY answer_id (quiz_id, question_id, answer),
-			            CONSTRAINT UNIQUE (quiz_id, question_id, answer)
-			            ) ".$charset_collate.";";
+                         answer_total bigint(20) NOT NULL DEFAULT 1,
+                        KEY answer_id (quiz_id, question_id, answer),
+                        CONSTRAINT UNIQUE (quiz_id, question_id, answer)
+                        ) ".$charset_collate.";";
 
-			$result = dbDelta ($sql);
-			update_option ("mission_quiz_db_version", $mission_quiz_db_version);
-		}
+            $result = dbDelta ($sql);
+            update_option ("mission_quiz_db_version", $mission_quiz_db_version);
+        }
 
-		public function init_plugin() {
-			$this->load_quiz_client_resources();
-		}
+        public function init_plugin() {
+            $this->load_quiz_client_resources();
+        }
 
-		public function load_quiz_client_resources()
-		{
-			if ( !is_admin() )
-			{
-				wp_register_style( 'mission-quiz', plugins_url( '/style/mission-quiz.css', __FILE__));
-				wp_enqueue_style( 'mission-quiz' );
+        public function load_quiz_client_resources()
+        {
+            if ( !is_admin() )
+            {
+                wp_register_style( 'mission-quiz', plugins_url( '/style/mission-quiz.css', __FILE__));
+                wp_enqueue_style( 'mission-quiz' );
 
                 wp_register_script( 'mission-quiz',
-						plugins_url( '/js/mission-quiz.js', __FILE__),
-						array( 'jquery' ),
+                        plugins_url( '/js/mission-quiz.js', __FILE__),
+                        array( 'jquery' ),
                         '1.0'
                     );
-				 wp_enqueue_script('mission-quiz');
-			}
-		}
+                 wp_enqueue_script('mission-quiz');
+            }
+        }
 
-		public function add_ajax_url()
-		{
-			echo '<script type="text/javascript">var MissionQuiz = { ajaxurl: "'.admin_url ('admin-ajax.php').'" };</script>';
-		}
+        public function add_ajax_url()
+        {
+            echo '<script type="text/javascript">var MissionQuiz = { ajaxurl: "'.admin_url ('admin-ajax.php').'" };</script>';
+        }
 
-		//********************************************************************
-		//Ajax handlers
+        //********************************************************************
+        //Ajax handlers
 
-		public function ajax_update_answers() {
-		    global $wpdb;
+        public function ajax_update_answers() {
+            global $wpdb;
 
-			$result = array( 'status' => '-1',
-							 'message' => '',
-							 'percent_answered' => [] );
+            $result = array( 'status' => '-1',
+                             'message' => '',
+                             'percent_answered' => [] );
 
-			//Validate expected params
-			if ( $_POST['quiz_id'] == null ) {
+            //Validate expected params
+            if ( $_POST['quiz_id'] == null ) {
                 $result["message"] = "ajax_update_answers: quiz_id was null";
-				die(json_encode($result));
+                die(json_encode($result));
             }
             if ( $_POST['question_no'] == null ) {
                 $result["message"] = "ajax_update_answers: question_no was null";
@@ -141,24 +141,25 @@ if (!class_exists("MissionQuiz"))
                     ORDER BY answer ASC;",
                 $quiz_id, $question_no));
 
-			//Return success
-			$result["status"] = 1;
-			$result["message"] = "All good";
+            //Return success
+            $result["status"] = 1;
+            $result["message"] = "All good";
             $result["percent_answered"] = $answer_totals;
 
             die(json_encode($result));
-		}
-	} //class:MissionQuiz
+        }
+    } //class:MissionQuiz
 
-	//Create instance of plugin
-	$mission_quiz_plugin = new MissionQuiz();
+    //Create instance of plugin
+    $mission_quiz_plugin = new MissionQuiz();
 
-	//Handle plugin activation and update
-	register_activation_hook( __FILE__, array( &$mission_quiz_plugin, 'setup_plugin' ));
-	if (function_exists ("register_update_hook"))
-		register_update_hook ( __FILE__, array( &$mission_quiz_plugin, 'setup_plugin' ));
-	else
-		add_action('init', array( &$mission_quiz_plugin, 'setup_plugin' ), 1);
+    //Handle plugin activation and update
+    register_activation_hook( __FILE__, array( &$mission_quiz_plugin, 'setup_plugin' ));
+    if (function_exists ("register_update_hook"))
+        register_update_hook ( __FILE__, array( &$mission_quiz_plugin, 'setup_plugin' ));
+    else
+        add_action('init', array( &$mission_quiz_plugin, 'setup_plugin' ), 1);
+
 
 /* Modify myQuestions[] below, then add the following to your Wordpress page using the HTML widget.
 <!--  BEGIN quiz HTML -->
