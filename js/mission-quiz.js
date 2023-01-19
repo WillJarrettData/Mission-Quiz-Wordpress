@@ -57,68 +57,101 @@ function handleUpdateAnswerCallback(response) {
 // build quiz function
 function buildQuiz() {
     const output = [];
-
     myQuestions.forEach(
         (currentQuestion, questionNumber) => {
             const answers = [];
-            var i = 0;
             for (letter in currentQuestion.answers) {
+                // create the answer buttons
                 answers.push(
-                    `<label>
-                            <input type="radio" name="question${questionNumber}" value="${letter}">
-                            ${currentQuestion.answers[letter]}
-                            <div class="checkmark">&nbsp ✓</div>
-                            <div class="wrong">&nbsp X</div>
-                            <div class="results-container">
-                                <div class="percent"></div>
-                            </div>
-                        </label>`
-                );
-                i++;
+                    `<div class="answer-container">
+                            <input class="button-answers button-answers-hover" type="button" name="${questionNumber}" id="${currentQuestion.answers[letter]}" >
+                        <div class="percent-bar"></div>
+                        <label for="${currentQuestion.answers[letter]}" class="answer-label">${currentQuestion.answers[letter]}</label>
+                        <div class="percent-label">21%</div>
+                    </div>`);
             }
 
+            // create the slide
             output.push(
                 `<div class="slide">
-                        <div class="question">${currentQuestion.question}</div>
-                        <br/>
-                        <a target="_blank" href="${currentQuestion.link}">
-                        <img decoding="async" class="image jetpack-lazy-image" src="${currentQuestion.image}" data-lazy-src="http://$currentQuestion.image?is-pending-load=1" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><noscript><img data-lazy-fallback="1" decoding="async" class="image" src="${currentQuestion.image}" /></noscript>
-                        </a>
-                        <br />
-                        <div class="answers">${answers.join("")}</div>
-                        </div>`
-            );
-        }
-    );
+                    <img decoding="async" class="image jetpack-lazy-image" src="${currentQuestion.image}" data-lazy-src="http://$currentQuestion.image?is-pending-load=1" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><noscript><img data-lazy-fallback="1" decoding="async" class="image" src="${currentQuestion.image}" /></noscript>
+                    <div class="question"><p><strong>${currentQuestion.number}. ${currentQuestion.question}</strong></p></div>
+                    ${answers.join("")}
+                </div>`);
+            }
+        );
 
     quizContainer.innerHTML = output.join('');
 }
-
-// show slide function, called from html script and showNextSlide()
-function showSlide(n) {
-    // move active-slide class from previous slide to slide n
-    slides[currentSlide].classList.remove('active-slide');
-    slides[n].classList.add('active-slide');
-
-    nextButton.style.display = 'none';
-    submitButton.style.display = 'none';
-    submitAnswerButton.style.display = 'inline-block';
-
-    // hide checkmarks, x'es, and percent answered, first time currentSlide=n=0
-    if (currentSlide != n) {
-        const answersContainer = quizContainer.querySelectorAll('.answers')[currentSlide];
-        const resultsContainer = answersContainer.querySelectorAll('.results-container');
-        resultsContainer.forEach(x => x.setAttribute("style", "display:none"));
-
-        currentSlide = n;
+////
+//// RESULTS
+////
+function showResults(resultsContainer){
+    // calculate correctness
+    let percentageCorrect = numCorrect / Object.keys(myQuestions).length
+    if (percentageCorrect == 1) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Clearly you should be setting the questions – your understanding of the Mission is unsurpassed. Congratulations!</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
     }
-}
-
-// move between slides using this, called from nextButton click
-async function showNextSlide() {
-    showSlide(currentSlide + 1);
-    questionNumberX++;
-}
+    else if (percentageCorrect > 0.5) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Nicely done! Your knowledge of the Mission is impressive. But there's still room to improve!</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    else if (percentageCorrect > 0) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Not bad! You still have a way to go until you can claim total understanding of the Mission, but you are off to a solid start.</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    else if (percentageCorrect == 0) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Oh dear! Perhaps it's time to give to have another browse through our articles.</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    quiz.innerHTML = ``;
+};
+            ////
+            //// SLIDES
+            ////
+            // move to next slide
+            function plusSlides(n) {
+                showSlides(slideIndex += n);
+                nextButton = document.getElementById('next');
+                nextButton.classList.add("hide");
+                for (let i = 0; i < answers.length; i++) {
+                        answers[i].classList.remove("disabled");
+                        answers[i].classList.add("button-answers-hover");
+                        answers[i].disabled = false;
+                        explanation.innerHTML = ""
+                }
+                // disable all the slides
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].classList.remove("disabled");
+                }
+                // jump to the top of the next question
+                document.getElementById("jump-to-next").scrollIntoView({behavior: 'auto'});
+            }
+            function showSlides(n) {
+                let i;
+                let slides = document.getElementsByClassName("slide");
+                // remove 'active slide' from previous slide
+                if (n > 0) {slides[n-1].classList.remove('active-slide')};
+                // if at the end of the quiz
+                if (n == slides.length) {
+                    nextButton.classList.add("hide");
+                    explanation.innerHTML = ""
+                    const resultsContainer = document.getElementById('results');
+                    showResults(resultsContainer);
+                }
+                // move to next slide
+                if (n != slides.length) {
+                    for (i = 0; i < slides.length; i++) {
+                        slides[n].classList.add('active-slide');
+                    }
+                    questionIterate++;
+                }
+            }
 
 // Turn off the submit answer, turn on either next button, or end quiz,
 // called from submitAnswerButton click
@@ -132,6 +165,43 @@ async function showAnswer() {
     }
 }
 
+            ////
+            //// FUNCTION: ANSWER VALIDATION
+            ////
+            function validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAnswerButton) {
+                // define variables
+                answers = document.getElementsByClassName('button-answers')
+                explanationText = "<p>" + myQuestions[questionIterate].explanation + "</p>"
+                explanation = document.getElementById('explanation')
+                slides = document.getElementsByClassName('slide')
+                // disable all the slides
+                for (let i = 0; i < slides.length; i++) {
+                    slides[i].classList.add("disabled");
+                }
+                // disable all the buttons
+                for (let i = 0; i < answers.length; i++) {
+                        answers[i].classList.add("disabled");
+                        answers[i].classList.remove("button-answers-hover");
+                        answers[i].disabled = true;
+                }
+
+                // if correct
+                if (userAnswer === correctAnswer) {
+                    correctAnswerButton.classList.add("correct");
+                    explanation.innerHTML = "<h3 class='correct-word'>CORRECT ✓</h3>"
+
+                    numCorrect++;
+                }
+                // if wrong
+                else {
+                    correctAnswerButton.classList.add("correct");
+                    userAnswerButton.classList.add("incorrect");
+                    explanation.innerHTML = "<h3 class='incorrect-word'>INCORRECT X</h3>"
+                }
+                explanation.innerHTML += explanationText
+
+            };
+/*
 // validate answers, called from submitAnswerButton click
 function validateAnswers() {
 
@@ -206,60 +276,7 @@ function validateAnswers() {
         incorrectAnswers.push(questionNumberX)
     }
 }
-
-// After all questions, show results function
-async function showResults() {
-    let percentageCorrect = numCorrect / Object.keys(myQuestions).length
-
-    var allAnswerLinks = []
-
-    // iterate through incorrect answers to display
-    for (var i = 0; i < incorrectAnswers.length; i++) {
-        answer = incorrectAnswers[i]
-        link = myQuestions[answer].link
-        question = myQuestions[answer].question
-        allAnswerLinks.push(`<p><a target="_blank" href="${link}">${question}</a></p>`)
-    };
-
-    allAnswerLinks = allAnswerLinks.join("");
-
-    if (percentageCorrect == 1) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Clearly you should be the one setting the questions – you achieved a perfect score. Your knowledge of Mission current affairs is unparalleled!</p>
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-    else if (percentageCorrect > 0.5) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Nicely done! You clearly keep up with Mission affairs, although there are still one or two gaps in your knowledge.</p>
-                    <p>The questions you answered incorrectly are listed below. Click the links to find the answers and get your score even higher.</p>
-                    ${allAnswerLinks}
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-    else if (percentageCorrect > 0) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Not bad! You still have a way to go until you can claim mastery of Mission current affairs, but you are off to a solid start.</p>
-                    <p>The questions you answered incorrectly are listed below. Click the links to find the answers.</p>
-                    ${allAnswerLinks}
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-    else if (percentageCorrect == 0) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Oh dear! If you answered all of the questions in this quiz entirely at random, there would only be a 13% chance of getting every single answer wrong.</p>
-                    <p>So, not only does your knowledge of Mission current affairs leave something to be desired, but you may also be pretty unlucky.</p>
-                    <p>But not to worry – help is at hand. Click the links below to find the answers to all the questions in this week's quiz.</p>
-                    ${allAnswerLinks}
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-
-    quiz.innerHTML = ``;
-    document.getElementById('submit').style.display = "none";
-    document.getElementById('next').style.display = "none";
-}
-
+*/
 var questionNumberX = 0;
 let numCorrect = 0;
 var incorrectAnswers = [];
