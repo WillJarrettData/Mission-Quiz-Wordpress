@@ -100,7 +100,7 @@
     margin-bottom: 10px !important;
     width: 100% !important;
     white-space: normal !important;
-    background-color: rgb(230, 230, 230) !important;
+    background-color: rgb(230, 230, 230);
     left: 0;
     top: 0;
 }
@@ -159,7 +159,7 @@
     background-color: rgb(92, 218, 92) !important;
 }
 .incorrect {
-    background-color: rgb(129, 129, 129) !important;
+    background-color: rgb(129, 129, 129);
 }
 .incorrect:hover {
     background-color: rgb(129, 129, 129) !important;

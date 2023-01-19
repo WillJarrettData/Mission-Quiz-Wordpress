@@ -36,21 +36,46 @@ function handleUpdateAnswerCallback(response) {
     for (var i = 0; i < PercentAnswered.length; i++) {
         num_answers = Number(PercentAnswered[i].answer_total);
         total_answers += num_answers;
-        answers[PercentAnswered[i].answer] = num_answers;
+        answers[Number(PercentAnswered[i].answer)] = num_answers;
     }
 
     // Fill in the .percent elements. Set their width and the 'nn%' text
-    const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
-    const inputs = answerContainer.querySelectorAll('input')
-    for (var i = 0; i < inputs.length; i++) {
-        const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
-        const percent_element = resultsContainer.querySelector(`.percent`);
-        let width = 0;
+    const slide = quizContainer.querySelectorAll('.slide')[questionIterate];
+    const inputs = slide.querySelectorAll('input')
+    const percent_labels = slide.querySelectorAll(`.percent-label`);
+    const percent_bars = slide.querySelectorAll(`.percent-bar`);
+    let len = inputs.length;
+    let widths = {};
+    let max_percent = 0;
+    for (var i = 0; i < len; i++) {
+        let percent = 0;
         if (i in answers) {
-            width = 100 * answers[i] / total_answers;
+            percent = Math.round(100 * answers[i] / total_answers);
         }
-        percent_element.style.width = `${width}%`;
-        percent_element.innerHTML = ` ${Math.round(width)}%<br/><br/>`;
+        widths[i] = percent;
+        if (max_percent < percent) {
+            max_percent = percent;
+        }
+        percent_labels[i].innerHTML = `${percent}%`;
+    }
+
+    let j = 0;
+    // animate percent bar every 10 msec until longest one is full
+    let interval_id = setInterval(growWidth, 10);
+    function growWidth() {
+        for (var i = 0; i < len; i++) {
+            let percent_bar = percent_bars[i];
+            if (j <= widths[i]) {
+                percent_bar.style.width = `${j}%`;
+            }
+        }
+        j++;
+        if (j > max_percent) {
+            clearInterval(interval_id);
+            for (var i = 0; i < len; i++) {
+                percent_labels[i].style.display = "inherit";
+            }
+        }
     }
 }
 
@@ -111,175 +136,115 @@ function showResults(resultsContainer){
     }
     quiz.innerHTML = ``;
 };
-            ////
-            //// SLIDES
-            ////
-            // move to next slide
-            function plusSlides(n) {
-                showSlides(slideIndex += n);
-                nextButton = document.getElementById('next');
-                nextButton.classList.add("hide");
-                for (let i = 0; i < answers.length; i++) {
-                        answers[i].classList.remove("disabled");
-                        answers[i].classList.add("button-answers-hover");
-                        answers[i].disabled = false;
-                        explanation.innerHTML = ""
-                }
-                // disable all the slides
-                for (let i = 0; i < slides.length; i++) {
-                    slides[i].classList.remove("disabled");
-                }
-                // jump to the top of the next question
-                document.getElementById("jump-to-next").scrollIntoView({behavior: 'auto'});
-            }
-            function showSlides(n) {
-                let i;
-                let slides = document.getElementsByClassName("slide");
-                // remove 'active slide' from previous slide
-                if (n > 0) {slides[n-1].classList.remove('active-slide')};
-                // if at the end of the quiz
-                if (n == slides.length) {
-                    nextButton.classList.add("hide");
-                    explanation.innerHTML = ""
-                    const resultsContainer = document.getElementById('results');
-                    showResults(resultsContainer);
-                }
-                // move to next slide
-                if (n != slides.length) {
-                    for (i = 0; i < slides.length; i++) {
-                        slides[n].classList.add('active-slide');
-                    }
-                    questionIterate++;
-                }
-            }
-
-// Turn off the submit answer, turn on either next button, or end quiz,
-// called from submitAnswerButton click
-async function showAnswer() {
-    submitAnswerButton.style.display = 'none';
-    if (currentSlide === slides.length - 1) {
-        submitButton.style.display = 'inline-block';
+////
+//// SLIDES
+////
+// move to next slide
+function plusSlides(n) {
+    showSlides(slideIndex += n);
+    nextButton = document.getElementById('next');
+    nextButton.classList.add("hide");
+    for (let i = 0; i < answers.length; i++) {
+            answers[i].classList.remove("disabled");
+            answers[i].classList.add("button-answers-hover");
+            answers[i].disabled = false;
+            explanation.innerHTML = ""
     }
-    else {
-        nextButton.style.display = 'inline-block';
+    // disable all the slides
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("disabled");
+    }
+    // jump to the top of the next question
+    document.getElementById("jump-to-next").scrollIntoView({behavior: 'auto'});
+}
+function showSlides(n) {
+    let i;
+    let slides = document.getElementsByClassName("slide");
+    // remove 'active slide' from previous slide
+    if (n > 0) {slides[n-1].classList.remove('active-slide')};
+    // if at the end of the quiz
+    if (n == slides.length) {
+        nextButton.classList.add("hide");
+        explanation.innerHTML = ""
+        const resultsContainer = document.getElementById('results');
+        showResults(resultsContainer);
+    }
+    // move to next slide
+    if (n != slides.length) {
+        for (i = 0; i < slides.length; i++) {
+            slides[n].classList.add('active-slide');
+        }
+        questionIterate++;
     }
 }
 
-            ////
-            //// FUNCTION: ANSWER VALIDATION
-            ////
-            function validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAnswerButton) {
-                // define variables
-                answers = document.getElementsByClassName('button-answers')
-                explanationText = "<p>" + myQuestions[questionIterate].explanation + "</p>"
-                explanation = document.getElementById('explanation')
-                slides = document.getElementsByClassName('slide')
-                // disable all the slides
-                for (let i = 0; i < slides.length; i++) {
-                    slides[i].classList.add("disabled");
-                }
-                // disable all the buttons
-                for (let i = 0; i < answers.length; i++) {
-                        answers[i].classList.add("disabled");
-                        answers[i].classList.remove("button-answers-hover");
-                        answers[i].disabled = true;
-                }
+////
+//// FUNCTION: ANSWER VALIDATION
+////
+function validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAnswerButton) {
+    // define variables
+    explanationText = "<p>" + myQuestions[questionIterate].explanation + "</p>";
+    explanation = document.getElementById('explanation');
+    let question_container = userAnswerButton.parentElement.parentElement;
+    answers = question_container.getElementsByClassName('button-answers');
+    slides = question_container.getElementsByClassName('slide');
+    percent_bars = question_container.getElementsByClassName('percent-bar');
+    percent_labels = question_container.getElementsByClassName('percent-label');
+    labels = question_container.getElementsByClassName('answer-label');
 
-                // if correct
-                if (userAnswer === correctAnswer) {
-                    correctAnswerButton.classList.add("correct");
-                    explanation.innerHTML = "<h3 class='correct-word'>CORRECT ✓</h3>"
-
-                    numCorrect++;
-                }
-                // if wrong
-                else {
-                    correctAnswerButton.classList.add("correct");
-                    userAnswerButton.classList.add("incorrect");
-                    explanation.innerHTML = "<h3 class='incorrect-word'>INCORRECT X</h3>"
-                }
-                explanation.innerHTML += explanationText
-
-            };
-/*
-// validate answers, called from submitAnswerButton click
-function validateAnswers() {
-
-    // grab questions and answers
-    const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
-    const selector = `input[name=question${questionNumberX}]:checked`;
-
-    // userAnswer is undefined if no input selected
-    const userAnswer = (answerContainer.querySelector(selector) || {}).value;
-    const inputs = answerContainer.querySelectorAll('input')
-
-    // iterate through answers to validate
-    var answer_no = -1;
-    for (var i = 0; i < inputs.length; i++) {
-        inputs[i].disabled = true;
-
-        if (userAnswer !== undefined) {
-            if (inputs[i].value === userAnswer) {
-                answer_no = i;
-            }
-        }
-
-        // set mark to element .checkmark, or element .wrong
-        const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
-        const labelContainer = answerContainer.querySelectorAll('label')[i];
-        const percent = resultsContainer.querySelector(`.percent`);
-        if (inputs[i].value === myQuestions[questionNumberX].correctAnswer) {
-            // Make the text Green
-            inputs[i].parentElement.classList.add("correct");
-
-            let checkmark = labelContainer.querySelector(`.checkmark`);
-            checkmark.style.display = "inline-block";
-
-            percent.style.backgroundColor = "LightGreen";
-        }
-        else {
-            if (inputs[i].value === userAnswer) {
-                // Make the text Red
-                inputs[i].parentElement.classList.add("incorrect");
-
-                let wrongmark = labelContainer.querySelector('.wrong');
-                wrongmark.style.display = "inline-block";
-            }
-
-            percent.style.backgroundColor = "LightCoral";
-        }
+    // disable all the slides
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.add("disabled");
     }
 
-    if (userAnswer === undefined) {
-        // No answer selected, set the X on all the wrong entries
-        for (var i = 0; i < inputs.length; i++) {
-            const labelContainer = answerContainer.querySelectorAll('label')[i];
-            if (inputs[i].value != myQuestions[questionNumberX].correctAnswer) {
-                // Make the text Red
-                inputs[i].parentElement.classList.add("incorrect")
+    // disable all the buttons
+    var user_answer_no;
+    for (let i = 0; i < answers.length; i++) {
+        answer = answers[i];
+        if (answer === userAnswerButton) {
+            user_answer_no = i;
+        }
 
-                const wrongmark = labelContainer.querySelector(`.wrong`);
-                wrongmark.style.display = "inline-block";
-            }
+        answer.classList.add("disabled");
+        answer.classList.remove("button-answers-hover");
+        answer.disabled = true;
+
+        // Set the background and text colors
+        if (answer === correctAnswerButton) {
+            labels[i].style.color = "White";
+            answer.style.backgroundColor = "LightGreen";
+            percent_bars[i].style.backgroundColor = "Green";
+        }
+        else if (answer === userAnswerButton) {
+            answer.style.backgroundColor = "LightCoral";
+            percent_bars[i].style.backgroundColor = "Red";
+        }
+        else {
+            answer.style.backgroundColor = "Silver";
+            percent_bars[i].style.backgroundColor = "#8e8e8e";
         }
     }
 
     // Update the database with the latest answer
     // In the callback handleUpdateAnswerCallback() set the percent width and text
-    sendAnswers(post_id, questionNumberX, answer_no);
+    sendAnswers(post_id, questionIterate, user_answer_no);
 
-    // count correct answers
-    if (myQuestions[questionNumberX].correctAnswer === userAnswer) {
+    correctAnswerButton.classList.add("correct");
+
+    // if correct
+    if (userAnswer === correctAnswer) {
+        explanation.innerHTML = "<h3 class='correct-word'>CORRECT ✓</h3>"
+
         numCorrect++;
     }
+    // if wrong
     else {
-        incorrectAnswers.push(questionNumberX)
+        userAnswerButton.classList.add("incorrect");
+        explanation.innerHTML = "<h3 class='incorrect-word'>INCORRECT X</h3>"
     }
+    explanation.innerHTML += explanationText
+
 }
-*/
-var questionNumberX = 0;
+
 let numCorrect = 0;
 var incorrectAnswers = [];
-var PercentAnswered = [];
-
-let currentSlide = 0;
