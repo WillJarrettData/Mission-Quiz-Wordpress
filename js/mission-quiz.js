@@ -36,233 +36,215 @@ function handleUpdateAnswerCallback(response) {
     for (var i = 0; i < PercentAnswered.length; i++) {
         num_answers = Number(PercentAnswered[i].answer_total);
         total_answers += num_answers;
-        answers[PercentAnswered[i].answer] = num_answers;
+        answers[Number(PercentAnswered[i].answer)] = num_answers;
     }
 
     // Fill in the .percent elements. Set their width and the 'nn%' text
-    const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
-    const inputs = answerContainer.querySelectorAll('input')
-    for (var i = 0; i < inputs.length; i++) {
-        const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
-        const percent_element = resultsContainer.querySelector(`.percent`);
-        let width = 0;
+    const slide = quizContainer.querySelectorAll('.slide')[questionIterate];
+    const inputs = slide.querySelectorAll('input')
+    const percent_labels = slide.querySelectorAll(`.percent-label`);
+    const percent_bars = slide.querySelectorAll(`.percent-bar`);
+    let len = inputs.length;
+    let widths = {};
+    let max_percent = 0;
+    for (var i = 0; i < len; i++) {
+        let percent = 0;
         if (i in answers) {
-            width = 100 * answers[i] / total_answers;
+            percent = Math.round(100 * answers[i] / total_answers);
         }
-        percent_element.style.width = `${width}%`;
-        percent_element.innerHTML = ` ${Math.round(width)}%<br/><br/>`;
+        widths[i] = percent;
+        if (max_percent < percent) {
+            max_percent = percent;
+        }
+        percent_labels[i].innerHTML = `${percent}%`;
+    }
+
+    let j = 0;
+    // animate percent bar every 10 msec until longest one is full
+    let interval_id = setInterval(growWidth, 10);
+    function growWidth() {
+        for (var i = 0; i < len; i++) {
+            let percent_bar = percent_bars[i];
+            if (j <= widths[i]) {
+                percent_bar.style.width = `${j}%`;
+            }
+        }
+        j++;
+        if (j > max_percent) {
+            clearInterval(interval_id);
+            for (var i = 0; i < len; i++) {
+                percent_labels[i].style.display = "inherit";
+            }
+        }
     }
 }
 
 // build quiz function
 function buildQuiz() {
     const output = [];
-
     myQuestions.forEach(
         (currentQuestion, questionNumber) => {
             const answers = [];
-            var i = 0;
             for (letter in currentQuestion.answers) {
+                // create the answer buttons
                 answers.push(
-                    `<label>
-                            <input type="radio" name="question${questionNumber}" value="${letter}">
-                            ${currentQuestion.answers[letter]}
-                            <div class="checkmark">&nbsp ✓</div>
-                            <div class="wrong">&nbsp X</div>
-                            <div class="results-container">
-                                <div class="percent"></div>
-                            </div>
-                        </label>`
-                );
-                i++;
+                    `<div class="answer-container">
+                            <input class="button-answers button-answers-hover" type="button" name="${questionNumber}" id="${currentQuestion.answers[letter]}" >
+                        <div class="percent-bar"></div>
+                        <label for="${currentQuestion.answers[letter]}" class="answer-label">${currentQuestion.answers[letter]}</label>
+                        <div class="percent-label">21%</div>
+                    </div>`);
             }
 
+            // create the slide
             output.push(
                 `<div class="slide">
-                        <div class="question">${currentQuestion.question}</div>
-                        <br/>
-                        <a target="_blank" href="${currentQuestion.link}">
-                        <img decoding="async" class="image jetpack-lazy-image" src="${currentQuestion.image}" data-lazy-src="http://$currentQuestion.image?is-pending-load=1" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><noscript><img data-lazy-fallback="1" decoding="async" class="image" src="${currentQuestion.image}" /></noscript>
-                        </a>
-                        <br />
-                        <div class="answers">${answers.join("")}</div>
-                        </div>`
-            );
-        }
-    );
+                    <img decoding="async" class="image jetpack-lazy-image" src="${currentQuestion.image}" data-lazy-src="http://$currentQuestion.image?is-pending-load=1" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"><noscript><img data-lazy-fallback="1" decoding="async" class="image" src="${currentQuestion.image}" /></noscript>
+                    <div class="question"><p><strong>${currentQuestion.number}. ${currentQuestion.question}</strong></p></div>
+                    ${answers.join("")}
+                </div>`);
+            }
+        );
 
     quizContainer.innerHTML = output.join('');
 }
-
-// show slide function, called from html script and showNextSlide()
-function showSlide(n) {
-    // move active-slide class from previous slide to slide n
-    slides[currentSlide].classList.remove('active-slide');
-    slides[n].classList.add('active-slide');
-
-    nextButton.style.display = 'none';
-    submitButton.style.display = 'none';
-    submitAnswerButton.style.display = 'inline-block';
-
-    // hide checkmarks, x'es, and percent answered, first time currentSlide=n=0
-    if (currentSlide != n) {
-        const answersContainer = quizContainer.querySelectorAll('.answers')[currentSlide];
-        const resultsContainer = answersContainer.querySelectorAll('.results-container');
-        resultsContainer.forEach(x => x.setAttribute("style", "display:none"));
-
-        currentSlide = n;
+////
+//// RESULTS
+////
+function showResults(resultsContainer){
+    // calculate correctness
+    let percentageCorrect = numCorrect / Object.keys(myQuestions).length
+    if (percentageCorrect == 1) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Clearly you should be setting the questions – your understanding of the Mission is unsurpassed. Congratulations!</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    else if (percentageCorrect > 0.5) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Nicely done! Your knowledge of the Mission is impressive. But there's still room to improve!</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    else if (percentageCorrect > 0) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Not bad! You still have a way to go until you can claim total understanding of the Mission, but you are off to a solid start.</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    else if (percentageCorrect == 0) {
+        resultsContainer.innerHTML = `<h3>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</h3>
+        <p>Oh dear! Perhaps it's time to give to have another browse through our articles.</p>
+        <button class="button1" onClick="window.location.reload();">Start again?</button>`;
+    }
+    quiz.innerHTML = ``;
+};
+////
+//// SLIDES
+////
+// move to next slide
+function plusSlides(n) {
+    showSlides(slideIndex += n);
+    nextButton = document.getElementById('next');
+    nextButton.classList.add("hide");
+    for (let i = 0; i < answers.length; i++) {
+            answers[i].classList.remove("disabled");
+            answers[i].classList.add("button-answers-hover");
+            answers[i].disabled = false;
+            explanation.innerHTML = ""
+    }
+    // disable all the slides
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.remove("disabled");
+    }
+    // jump to the top of the next question
+    document.getElementById("jump-to-next").scrollIntoView({behavior: 'auto'});
+}
+function showSlides(n) {
+    let i;
+    let slides = document.getElementsByClassName("slide");
+    // remove 'active slide' from previous slide
+    if (n > 0) {slides[n-1].classList.remove('active-slide')};
+    // if at the end of the quiz
+    if (n == slides.length) {
+        nextButton.classList.add("hide");
+        explanation.innerHTML = ""
+        const resultsContainer = document.getElementById('results');
+        showResults(resultsContainer);
+    }
+    // move to next slide
+    if (n != slides.length) {
+        for (i = 0; i < slides.length; i++) {
+            slides[n].classList.add('active-slide');
+        }
+        questionIterate++;
     }
 }
 
-// move between slides using this, called from nextButton click
-async function showNextSlide() {
-    showSlide(currentSlide + 1);
-    questionNumberX++;
-}
+////
+//// FUNCTION: ANSWER VALIDATION
+////
+function validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAnswerButton) {
+    // define variables
+    explanationText = "<p>" + myQuestions[questionIterate].explanation + "</p>";
+    explanation = document.getElementById('explanation');
+    let question_container = userAnswerButton.parentElement.parentElement;
+    answers = question_container.getElementsByClassName('button-answers');
+    slides = question_container.getElementsByClassName('slide');
+    percent_bars = question_container.getElementsByClassName('percent-bar');
+    percent_labels = question_container.getElementsByClassName('percent-label');
+    labels = question_container.getElementsByClassName('answer-label');
 
-// Turn off the submit answer, turn on either next button, or end quiz,
-// called from submitAnswerButton click
-async function showAnswer() {
-    submitAnswerButton.style.display = 'none';
-    if (currentSlide === slides.length - 1) {
-        submitButton.style.display = 'inline-block';
+    // disable all the slides
+    for (let i = 0; i < slides.length; i++) {
+        slides[i].classList.add("disabled");
     }
-    else {
-        nextButton.style.display = 'inline-block';
-    }
-}
 
-// validate answers, called from submitAnswerButton click
-function validateAnswers() {
-
-    // grab questions and answers
-    const answerContainer = quizContainer.querySelectorAll('.answers')[questionNumberX];
-    const selector = `input[name=question${questionNumberX}]:checked`;
-
-    // userAnswer is undefined if no input selected
-    const userAnswer = (answerContainer.querySelector(selector) || {}).value;
-    const inputs = answerContainer.querySelectorAll('input')
-
-    // iterate through answers to validate
-    var answer_no = -1;
-    for (var i = 0; i < inputs.length; i++) {
-        inputs[i].disabled = true;
-
-        if (userAnswer !== undefined) {
-            if (inputs[i].value === userAnswer) {
-                answer_no = i;
-            }
+    // disable all the buttons
+    var user_answer_no;
+    for (let i = 0; i < answers.length; i++) {
+        answer = answers[i];
+        if (answer === userAnswerButton) {
+            user_answer_no = i;
         }
 
-        // set mark to element .checkmark, or element .wrong
-        const resultsContainer = answerContainer.querySelectorAll('.results-container')[i];
-        const labelContainer = answerContainer.querySelectorAll('label')[i];
-        const percent = resultsContainer.querySelector(`.percent`);
-        if (inputs[i].value === myQuestions[questionNumberX].correctAnswer) {
-            // Make the text Green
-            inputs[i].parentElement.classList.add("correct");
+        answer.classList.add("disabled");
+        answer.classList.remove("button-answers-hover");
+        answer.disabled = true;
 
-            let checkmark = labelContainer.querySelector(`.checkmark`);
-            checkmark.style.display = "inline-block";
-
-            percent.style.backgroundColor = "LightGreen";
+        // Set the background and text colors
+        if (answer === correctAnswerButton) {
+            labels[i].style.color = "White";
+            answer.style.backgroundColor = "LightGreen";
+            percent_bars[i].style.backgroundColor = "Green";
+        }
+        else if (answer === userAnswerButton) {
+            answer.style.backgroundColor = "LightCoral";
+            percent_bars[i].style.backgroundColor = "Red";
         }
         else {
-            if (inputs[i].value === userAnswer) {
-                // Make the text Red
-                inputs[i].parentElement.classList.add("incorrect");
-
-                let wrongmark = labelContainer.querySelector('.wrong');
-                wrongmark.style.display = "inline-block";
-            }
-
-            percent.style.backgroundColor = "LightCoral";
-        }
-    }
-
-    if (userAnswer === undefined) {
-        // No answer selected, set the X on all the wrong entries
-        for (var i = 0; i < inputs.length; i++) {
-            const labelContainer = answerContainer.querySelectorAll('label')[i];
-            if (inputs[i].value != myQuestions[questionNumberX].correctAnswer) {
-                // Make the text Red
-                inputs[i].parentElement.classList.add("incorrect")
-
-                const wrongmark = labelContainer.querySelector(`.wrong`);
-                wrongmark.style.display = "inline-block";
-            }
+            answer.style.backgroundColor = "Silver";
+            percent_bars[i].style.backgroundColor = "#8e8e8e";
         }
     }
 
     // Update the database with the latest answer
     // In the callback handleUpdateAnswerCallback() set the percent width and text
-    sendAnswers(post_id, questionNumberX, answer_no);
+    sendAnswers(post_id, questionIterate, user_answer_no);
 
-    // count correct answers
-    if (myQuestions[questionNumberX].correctAnswer === userAnswer) {
+    correctAnswerButton.classList.add("correct");
+
+    // if correct
+    if (userAnswer === correctAnswer) {
+        explanation.innerHTML = "<h3 class='correct-word'>CORRECT ✓</h3>"
+
         numCorrect++;
     }
+    // if wrong
     else {
-        incorrectAnswers.push(questionNumberX)
+        userAnswerButton.classList.add("incorrect");
+        explanation.innerHTML = "<h3 class='incorrect-word'>INCORRECT X</h3>"
     }
+    explanation.innerHTML += explanationText
+
 }
 
-// After all questions, show results function
-async function showResults() {
-    let percentageCorrect = numCorrect / Object.keys(myQuestions).length
-
-    var allAnswerLinks = []
-
-    // iterate through incorrect answers to display
-    for (var i = 0; i < incorrectAnswers.length; i++) {
-        answer = incorrectAnswers[i]
-        link = myQuestions[answer].link
-        question = myQuestions[answer].question
-        allAnswerLinks.push(`<p><a target="_blank" href="${link}">${question}</a></p>`)
-    };
-
-    allAnswerLinks = allAnswerLinks.join("");
-
-    if (percentageCorrect == 1) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Clearly you should be the one setting the questions – you achieved a perfect score. Your knowledge of Mission current affairs is unparalleled!</p>
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-    else if (percentageCorrect > 0.5) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Nicely done! You clearly keep up with Mission affairs, although there are still one or two gaps in your knowledge.</p>
-                    <p>The questions you answered incorrectly are listed below. Click the links to find the answers and get your score even higher.</p>
-                    ${allAnswerLinks}
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-    else if (percentageCorrect > 0) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Not bad! You still have a way to go until you can claim mastery of Mission current affairs, but you are off to a solid start.</p>
-                    <p>The questions you answered incorrectly are listed below. Click the links to find the answers.</p>
-                    ${allAnswerLinks}
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-    else if (percentageCorrect == 0) {
-        resultsContainer.innerHTML = `<div>You scored <strong>${numCorrect} out of ${myQuestions.length}</strong>.</div>
-                    <br />
-                    <p>Oh dear! If you answered all of the questions in this quiz entirely at random, there would only be a 13% chance of getting every single answer wrong.</p>
-                    <p>So, not only does your knowledge of Mission current affairs leave something to be desired, but you may also be pretty unlucky.</p>
-                    <p>But not to worry – help is at hand. Click the links below to find the answers to all the questions in this week's quiz.</p>
-                    ${allAnswerLinks}
-                    <button class="button1" onClick="window.location.reload();">Start again?</button>`;
-    }
-
-    quiz.innerHTML = ``;
-    document.getElementById('submit').style.display = "none";
-    document.getElementById('next').style.display = "none";
-}
-
-var questionNumberX = 0;
 let numCorrect = 0;
 var incorrectAnswers = [];
-var PercentAnswered = [];
-
-let currentSlide = 0;

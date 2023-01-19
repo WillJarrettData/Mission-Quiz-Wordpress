@@ -167,97 +167,90 @@ if (!class_exists("MissionQuiz"))
 
 /* Modify myQuestions[] below, then add the following to your Wordpress page using the HTML widget.
 <!--  BEGIN quiz HTML -->
-    <!-- template for quiz, answers, buttons -->
+
+
     <div class="outer">
-        <div class="quiz-container">
+        <div class="quiz-container" id="jump-to-next">
             <div id="quiz"></div>
+            <div id="explanation"></div>
             <div class="button-container">
-                <button id="submitAnswer" class="button1" style="display: inline-block;">Submit Answer</button>
-                <button id="next" class="button1" style="display: none;" fdprocessedid="n2ixpc">Next Question</button>
-                <button id="submit" class="button1" style="display: none;">Submit Quiz</button>
+                <button id="next" class="button1 hide" onclick="plusSlides(1)">Next</button>
                 <div id="results"></div>
             </div>
         </div>
     </div>
-    <!--  END quiz HTML -->
 
-    <!-- BEGIN javascript -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+
     <script>
-
-    // define quiz data
+    ////
+    //// QUIZ DATA
+    ////
     const myQuestions = [
         {
-            "question": "1. State eviction protections expire April 1. As of last Wednesday, how many of the inner Mission’s rent relief requests had been paid?",
-            "link": "https://missionlocal.org/2022/03/as-april-1-evictions-loom-only-44-of-mission-rent-relief-requests-have-been-paid/",
-            "image": "https://i0.wp.com/missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/03/cancelrent.jpg?w=1200&ssl=1",
-            "answers": { a: "10%", b: "44%", c: "80%", d: "98%" },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "b"
+        "number": "1",
+        "question":"Which Mission personality is leaving San Francisco?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/07/placeholder.jpg",
+        "answers": {a:"Lone Star Swan",b:"Manny Yekutiel",c:"The Crème Brûlée Cart Man"},
+        "correctAnswer":"The Crème Brûlée Cart Man",
+        "explanation": "Curtis Kimball, also known as the The Crème Brûlée Cart Man/The Pancake Guy, is <a target='_blank' href='https://missionlocal.org/2022/07/creme-brulee-cart-pancake-curtis-kimball/'>leaving San Francisco after two decades to be closer to ailing family</a>. He said goodbye with a final pancake event on Saturday.<br /><br />Sadly, <a target='_blank' href='https://missionlocal.org/2022/02/swan-song-john-ratliff-lone-star-swan-dies-at-81/'>Lone Star Swan</a> died earlier this year."
         },
         {
-            "question": "2. A new Valencia Street gallery is bringing the Palestinian refugee experience into focus – through which medium?",
-            "link": "https://missionlocal.org/2022/03/a-new-valencia-street-gallery-brings-refugee-experience-into-focus/",
-            "image": "https://i0.wp.com/missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/03/jehad-photos.jpg?resize=930%2C580&ssl=1",
-            "answers": { a: "Photography", b: "Animation", c: "Video", d: "Virtual reality" },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "a"
+        "number": "2",
+        "question":"Gig Workers Rising is the biggest group trying to organize gig workers in Northern California. Roughly how many members do they have?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/07/featured-image-1-1536x1184.jpg",
+        "answers": {a:"20",b:"200",c:"2,000"},
+        "correctAnswer":"200",
+        "explanation": "Volunteer organizers have been trying to <a target='_blank' href='https://missionlocal.org/2022/07/labor-organizers-sf-gig-workers-tough-target/'>reach out to gig workers</a> to ultimately claim the right to strike, protest, and make demands of employers. Gig workers have far fewer protections than regular employees and have not been able to organize unions in the same way."
         },
         {
-            "question": "3. Fill in the blank: According to data presented by Police Chief Bill Scott, San Francisco officers are ___ times more likely to stop and search Black people than white people.",
-            "link": "https://missionlocal.org/2022/03/sfpd-stop-and-searches-are-down-but-black-people-are-still-disproportionately-targeted/",
-            "image": "https://i0.wp.com/missionloca.s3.amazonaws.com/mission/wp-content/uploads/2017/11/ChiefScott_LowRes_IMG_0123.jpg?w=850&ssl=1",
-            "answers": { a: "6", b: "8", c: "10", d: "12" },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "c"
+        "number": "3",
+        "question":"When District Attorney Brooke Jenkins gave a speech in Chinatown, the event’s translator took some liberties with their Cantonese translation. What did the translator say?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/07/IMG_9868.jpg",
+        "answers": {a:"Jenkins will bring “bandits” to justice",b:"Jenkins will continue the legacy of Chesa Boudin",c:"Jenkins will pursue responsible reform"},
+        "correctAnswer":"Jenkins will bring “bandits” to justice",
+        "explanation": "<a target='_blank' href='https://missionlocal.org/2022/07/da-brooke-jenkins-chinatown-scourge-anti-asisan-bandits/'>Jenkins said</a> “no longer will we just allow people to walk around feeling like they’re going to be targeted because of who they are,” which was translated into a promise to “bring all the bandits who attacked our Asians and attacked our community to justice.”"
         },
         {
-            "question": "4. Since 2017, which Mission intersection saw the most crashes of any in San Francisco?",
-            "link": "https://missionlocal.org/2022/03/the-mission-has-some-of-the-citys-most-dangerous-intersections/",
-            "image": "https://i0.wp.com/missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/03/13thAndMissionSt.jpg?w=1200&ssl=1",
-            "answers": { a: "13th St. and S Van Ness Ave.", b: "16th St. and Potrero Ave.", c: "13th St. and Mission St.", d: "16th St. and S Van Ness Ave." },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "c"
+        "number": "4",
+        "question":"Why were transfers from Laguna Honda hospital halted yesterday?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/05/Screen-Shot-2022-05-17-at-2.55.12-PM-1536x960.png",
+        "answers": {a:"Patients’ families staged a hunger strike",b:"Other facilities refused to take patients",c:"Several patients died after moving"},
+        "correctAnswer":"Several patients died after moving",
+        "explanation": "Pleas from families and advocates to <a target='_blank' href='https://missionlocal.org/2022/07/transfers-from-laguna-honda-put-on-hold-but-not-before-at-least-five-patient-deaths/'>halt patient transfers</a> out of Laguna Honda Hospital were heard after at least five patients died right after they were transfered."
         },
         {
-            "question": "5. How many job vacancies are there currently in San Francisco city departments?",
-            "link": "https://missionlocal.org/2022/03/city-employees-march-against-low-staffing/",
-            "image": "https://i0.wp.com/missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/03/StaffingPic6.jpg?resize=1536%2C1139&ssl=1",
-            "answers": { a: "800", b: "3,800", c: "8,000", d: "12,000" },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "b"
+        "number": "5",
+        "question":"Some 300 workers from which SF housing manager went on strike this Wednesday?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/07/Strike_banner_blurred.jpg",
+        "answers": {a:"Tenderloin Neighborhood Development Corporation",b:"Tenderloin Housing Clinic",c:"Caritas Management"},
+        "correctAnswer":"Tenderloin Housing Clinic",
+        "explanation": "The workers were <a target=’_blank’ href=’https://missionlocal.org/2022/07/tenderloin-housing-clinic-workers-walk-off-job-demand-living-wage/’>demanding higher wages</a> for all of their staff. The Tenderloin Housing Clinic management said that the wages they can give are dependent on money provided by the city."
         },
         {
-            "question": "6. Which company has been renting city property to park their vehicles, in violation of the law?",
-            "link": "https://missionlocal.org/2022/03/how-did-amazon-end-up-renting-city-property-to-park-delivery-vans-in-violation-of-the-law/",
-            "image": "https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/03/QuestionMarkImage.png",
-            "answers": { a: "Uber", b: "Amazon", c: "Lyft", d: "Google" },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "b"
+        "number": "6",
+        "question":"How did Mission resident Anand Upender get to know his neighbors?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/07/placeholder.jpg",
+        "answers": {a:"Launched an oral history project",b:"Served coffee out of his garage",c:"Performed 12 hours of interpretive dance"},
+        "correctAnswer":"Served coffee out of his garage",
+        "explanation": "Upender and his roommates didn’t want to be “the kind of transient young people who move through cities” quickly, he said, prompting his <a target='_blank' href=https://missionlocal.org/2022/07/york-street-coffee-pop-up-mission/''>coffee-based community building</a>."
         },
         {
-            "question": "7. Following internal conflicts, the La Raza Community Resource Center was passed over for how much in government rent relief grants last week?",
-            "link": "https://missionlocal.org/2022/03/nonprofit-loses-8-million-in-funding-following-internal-controversies/",
-            "image": "https://i0.wp.com/missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/03/IMG_8298.jpg?w=1200&ssl=1",
-            "answers": { a: "$100,000", b: "$500,000", c: "$2 million", d: "$8 million" },
-            "percentAnswered": [25, 45, 10, 20],
-            "correctAnswer": "d"
+        "number": "7",
+        "question":"Who created this linoleum print, featured in a recently opened Richmond exhibition?",
+        "image":"https://missionloca.s3.amazonaws.com/mission/wp-content/uploads/2022/07/My-project-3-11-612x640.png",
+        "answers": {a:"Diego Rivera",b:"Frida Kahlo",c:"Emmy Lou Packard"},
+        "correctAnswer":"Emmy Lou Packard",
+        "explanation": "Packard was a friend and ally of Mexican muralist Diego Rivera and his wife Frida Kahlo, but produced a <a target='_blank' href=’https://missionlocal.org/2022/07/who-is-emmy-lou-packard/'>plenty of her own work too</a>. Some of her best works will be on display at the Richmond Arts Center until August 20."
         },
     ];
-
-    // this will run when page is loaded. const references to html above
+    ////
+    //// INITIALIZE
+    ////
+    // grab quiz HTML and build the quiz
     const quizContainer = document.getElementById('quiz');
-    const resultsContainer = document.getElementById('results');
-    const submitButton = document.getElementById('submit');
-    const submitAnswerButton = document.getElementById('submitAnswer');
-
     buildQuiz();
 
-    // const references to elements added by buildQuiz()
-    const nextButton = document.getElementById("next");
-    const slides = document.querySelectorAll(".slide");
-
-    // Find the post id for use as quiz_id in database.
-    // Default to an unlikely post_id
     var post_id = 0;
     classes = document.body.classList;
     for (let i in classes) {
@@ -270,16 +263,23 @@ if (!class_exists("MissionQuiz"))
         alert("post_id not found");
     }
 
-    // show first slide
-    showSlide(currentSlide);
-
-    // Add the hooks for button clicks
-    submitAnswerButton.addEventListener("click", validateAnswers);
-    submitAnswerButton.addEventListener("click", showAnswer);
-    submitButton.addEventListener('click', showResults);
-    nextButton.addEventListener("click", showNextSlide);
+    questionIterate = -1;
+    numCorrect = 0;
+    // on answer click
+    $(".button-answers").click(function() {
+        $('#next').removeClass('hide');
+        var userAnswer = $(this).attr('id');
+        var correctAnswer = myQuestions[questionIterate].correctAnswer;
+        var userAnswerButton = document.getElementById(userAnswer);
+        var correctAnswerButton = document.getElementById(correctAnswer);
+        validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAnswerButton);
+    });
+    // start off slides
+    let slideIndex = 0;
+    showSlides(slideIndex);
 
     </script>
+
 */
 
 }
