@@ -1,32 +1,30 @@
 <?php
 /*
- * Plugin Name: MissionQuiz
- * Plugin URI:
- * Description: Demonstration of quiz percentages, very specific to post #9
- * Version: 1.0
- * Author: Craig mautner
- * Author URI:
- * License: GPL2
+ * Plugin Name:     MissionQuiz
+ * Plugin URI:      https://github.com/Firmware-Repairman/Mission-Quiz-Wordpress
+ * Description:     Quiz template that tracks totals of user answers. Used in missionlocal.org
+ * Version:         1.0
+ * Author:          Craig Mautner
+ * License:         GPLv3
+ * License URI:     https://www.gnu.org/licenses/gpl-3.0.html
  *
  * Copyright 2023 Craig Mautner (mailto:craig.mautner@gmail.com)
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation.
+ * This file is part of the wordpress plugin MissionQuiz.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.    See the
- * GNU General Public License for more details.
+ * MissionQuiz is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA    02110-1301    USA
+ * MissionQuiz is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
  *
- * This Wordpress plugin is released under a GNU General Public License, version 2.
- * A complete version of this license can be found here:
- * http://www.gnu.org/licenses/gpl-2.0.html
-*/
+ * You should have received a copy of the GNU General Public License along with
+ * MissionQuiz. If not, see <https://www.gnu.org/licenses/>.
+ */
 
 if (!class_exists("MissionQuiz"))
 {
