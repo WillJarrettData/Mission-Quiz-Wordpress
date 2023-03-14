@@ -43,7 +43,7 @@
     min-width: 200px;
     max-width: 630px;
     margin: auto;
-    width: 80%;
+    width: 95%;
     border-radius: 2px;
     background-color: rgba(245, 245, 245, 0);
     border: 3px solid #5e5e5e00;
@@ -117,7 +117,7 @@
     margin-bottom: 10px !important;
     width: 100% !important;
     white-space: normal !important;
-    background-color: rgb(230, 230, 230);
+    background-color: #e0e0e0 !important;
     left: 0;
     top: 0;
 }
@@ -140,8 +140,9 @@
     position: absolute;
     left: 0;
     top: 0;
-    margin: 10px;
+    margin: 8px;
     font-size: 16px;
+	cursor: pointer !important;
 }
 
 .percent-label {
