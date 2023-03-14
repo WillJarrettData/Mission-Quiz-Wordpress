@@ -165,8 +165,6 @@ if (!class_exists("MissionQuiz"))
 
 /* Modify myQuestions[] below, then add the following to your Wordpress page using the HTML widget.
 <!--  BEGIN quiz HTML -->
-
-
     <div class="outer">
         <div class="quiz-container" id="jump-to-next">
             <div id="quiz"></div>
@@ -177,9 +175,7 @@ if (!class_exists("MissionQuiz"))
             </div>
         </div>
     </div>
-
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-
     <script>
     ////
     //// QUIZ DATA
@@ -248,7 +244,6 @@ if (!class_exists("MissionQuiz"))
     // grab quiz HTML and build the quiz
     const quizContainer = document.getElementById('quiz');
     buildQuiz();
-
     var post_id = 0;
     classes = document.body.classList;
     for (let i in classes) {
@@ -260,12 +255,10 @@ if (!class_exists("MissionQuiz"))
     if (post_id === 0) {
         alert("post_id not found");
     }
-
     questionIterate = -1;
     numCorrect = 0;
     // on answer click
     $(".button-answers").click(function() {
-        $('#next').removeClass('hide');
         var userAnswer = $(this).attr('id');
         var correctAnswer = myQuestions[questionIterate].correctAnswer;
         var userAnswerButton = document.getElementById(userAnswer);
@@ -275,9 +268,7 @@ if (!class_exists("MissionQuiz"))
     // start off slides
     let slideIndex = 0;
     showSlides(slideIndex);
-
     </script>
-
 */
 
 }
