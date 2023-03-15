@@ -94,7 +94,7 @@ function handleUpdateAnswerCallback(response) {
             }
         }
     }
-	$('#next').removeClass('hide');
+    $('#next').removeClass('hide');
 }
 
 // build quiz function
@@ -174,20 +174,18 @@ function plusSlides(n) {
     }
     // jump to the top of the next question
     document.getElementById("jump-to-next").scrollIntoView({behavior: 'auto'});
-	
-	active_answers = document.getElementsByClassName('active-slide')[0].getElementsByClassName('button-answers');
-	active_labels = document.getElementsByClassName('active-slide')[0].getElementsByClassName('answer-label');
-	for (let i = 0; i < active_answers.length; i++) {
-		console.log(active_answers[i])
-		active_answers[i].classList.remove("disabled")
-	}
-	for (let i = 0; i < active_labels.length; i++) {
-		console.log(active_labels[i])
-		active_labels[i].classList.remove("disabled")
-	}
+    
+    active_answers = document.getElementsByClassName('active-slide')[0].getElementsByClassName('button-answers');
+    active_labels = document.getElementsByClassName('active-slide')[0].getElementsByClassName('answer-label');
+    for (let i = 0; i < active_answers.length; i++) {
+        active_answers[i].classList.remove("disabled")
+    }
+    for (let i = 0; i < active_labels.length; i++) {
+        active_labels[i].classList.remove("disabled")
+    }
 }
 async function showSlides(n) {
-	
+    
     let i;
     let slides = document.getElementsByClassName("slide");
     // remove 'active slide' from previous slide
@@ -206,27 +204,27 @@ async function showSlides(n) {
         }
         questionIterate++;
     }
-	
-	all_answers = document.querySelectorAll('.button-answers');
-	all_labels = document.querySelectorAll('.answer-label');
-	for (let i = 0; i < all_answers.length; i++) {
-		all_answers[i].classList.add("disabled")
-	}
-	for (let i = 0; i < all_labels.length; i++) {
-		all_labels[i].classList.add("disabled")
-	}
-	
-	active_answers = document.getElementsByClassName('active-slide')[0].getElementsByClassName('button-answers');
-	active_labels = document.getElementsByClassName('active-slide')[0].getElementsByClassName('answer-label');
-	for (let i = 0; i < active_answers.length; i++) {
-		console.log(active_answers[i])
-		active_answers[i].classList.remove("disabled")
-	}
-	for (let i = 0; i < active_labels.length; i++) {
-		console.log(active_labels[i])
-		active_labels[i].classList.remove("disabled")
-	}
-	
+    
+    all_answers = document.querySelectorAll('.button-answers');
+    all_labels = document.querySelectorAll('.answer-label');
+    for (let i = 0; i < all_answers.length; i++) {
+        all_answers[i].classList.add("disabled")
+    }
+    for (let i = 0; i < all_labels.length; i++) {
+        all_labels[i].classList.add("disabled")
+    }
+    
+    active_answers = document.getElementsByClassName('active-slide')[0].getElementsByClassName('button-answers');
+    active_labels = document.getElementsByClassName('active-slide')[0].getElementsByClassName('answer-label');
+    for (let i = 0; i < active_answers.length; i++) {
+        console.log(active_answers[i])
+        active_answers[i].classList.remove("disabled")
+    }
+    for (let i = 0; i < active_labels.length; i++) {
+        console.log(active_labels[i])
+        active_labels[i].classList.remove("disabled")
+    }
+    
 }
 
 ////
@@ -243,16 +241,16 @@ function validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAns
     percent_labels = question_container.getElementsByClassName('percent-label');
     labels = question_container.getElementsByClassName('answer-label');
 
-	// But disable them properly
-	all_answers = document.querySelectorAll('.button-answers:not(.active-slide .button-answers *)');
-	all_labels = document.querySelectorAll('.answer-label:not(.active-slide .answer-label *)');
-	for (let i = 0; i < all_answers.length; i++) {
-		all_answers[i].classList.add("disabled")
-	}
-	for (let i = 0; i < all_labels.length; i++) {
-		all_labels[i].classList.add("disabled")
-	}
-	
+    // But disable them properly
+    all_answers = document.querySelectorAll('.button-answers:not(.active-slide .button-answers *)');
+    all_labels = document.querySelectorAll('.answer-label:not(.active-slide .answer-label *)');
+    for (let i = 0; i < all_answers.length; i++) {
+        all_answers[i].classList.add("disabled")
+    }
+    for (let i = 0; i < all_labels.length; i++) {
+        all_labels[i].classList.add("disabled")
+    }
+    
     // disable all the slides
     for (let i = 0; i < slides.length; i++) {
         slides[i].classList.add("disabled");
@@ -283,7 +281,7 @@ function validateAnswers(userAnswer, correctAnswer, userAnswerButton, correctAns
             percent_bars[i].style.backgroundColor = "#8e8e8e";
         }
     }
-	
+    
     // Update the database with the latest answer
     // In the callback handleUpdateAnswerCallback() set the percent width and text
     sendAnswers(post_id, questionIterate, user_answer_no);
